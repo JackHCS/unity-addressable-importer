@@ -4,6 +4,7 @@ using UnityEngine.AddressableAssets;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using UnityAddressableImporter.Helper;
+using com.littlebigfun.addressable_importer.Editor;
 
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
@@ -157,7 +158,7 @@ public class AddressableImportRule
                 return regex.IsMatch(assetPath);
             }
             else
-                return assetPath.StartsWith(path);
+                return assetPath.StartsWithFast(path);
         }
         else if (matchType == AddressableImportRuleMatchType.Regex)
 		{

@@ -38,8 +38,8 @@ public class AddressableImporter : AssetPostprocessor
     {
         // Skip if all imported and deleted assets are addressables configurations.
         var isConfigurationPass =
-            (importedAssets.Length > 0 && importedAssets.All(x => x.StartsWith("Assets/AddressableAssetsData"))) &&
-            (deletedAssets.Length > 0 && deletedAssets.All(x => x.StartsWith("Assets/AddressableAssetsData")));
+            (importedAssets.Length > 0 && importedAssets.All(x => x.StartsWithFast("Assets/AddressableAssetsData"))) &&
+            (deletedAssets.Length > 0 && deletedAssets.All(x => x.StartsWithFast("Assets/AddressableAssetsData")));
         if (isConfigurationPass)
         {
             return;
@@ -116,7 +116,7 @@ public class AddressableImporter : AssetPostprocessor
 
     static bool IsAssetIgnored(string assetPath)
     {
-        return assetPath.EndsWith(".meta") || assetPath.EndsWith(".DS_Store") || assetPath.EndsWith("~");
+        return assetPath.EndsWithFast(".meta") || assetPath.EndsWithFast(".DS_Store") || assetPath.EndsWithFast("~");
     }
 
     static AddressableAssetGroup CreateAssetGroup<SchemaType>(AddressableAssetSettings settings, string groupName)
@@ -201,7 +201,7 @@ public class AddressableImporter : AssetPostprocessor
         {
             // Apply address replacement if address is empty or path.
             if (string.IsNullOrEmpty(entry.address) ||
-                entry.address.StartsWith("Assets/") ||
+                entry.address.StartsWithFast("Assets/") ||
                 rule.simplified ||
                 !string.IsNullOrWhiteSpace(rule.addressReplacement))
             {
@@ -333,7 +333,7 @@ public class AddressableImporter : AssetPostprocessor
                     foreach (var dir in dirsToAdd)
                     {
                         // Filter out .dirname and dirname~, those are invisible to Unity.
-                        if (!dir.StartsWith(".") && !dir.EndsWith("~"))
+                        if (!dir.StartsWithFast(".") && !dir.EndsWithFast("~"))
                         {
                             pathsToImport.Add(dir.Replace('\\', '/'));
                         }
