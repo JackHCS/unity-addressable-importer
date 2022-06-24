@@ -9,6 +9,7 @@ using System.Linq;
 using System.IO;
 using System.Text.RegularExpressions;
 using UnityEditor.AddressableAssets.Settings.GroupSchemas;
+using com.littlebigfun.addressable_importer.Editor;
 
 #if UNITY_2021_2_OR_NEWER
 using UnityEditor.SceneManagement;
@@ -58,7 +59,7 @@ public class AddressableImporter : AssetPostprocessor
             Debug.LogWarningFormat("[AddressableImporter] import settings file not found.\nPlease go to Assets/AddressableAssetsData folder, right click in the project window and choose 'Create > Addressables > Import Settings'.");
             return;
         }
-        if (importSettings.rules == null || importSettings.rules.Count == 0)
+        if (importSettings.rules.SafeCount() == 0 && importSettings.folderRules.SafeCount() == 0)
             return;
 
         // Cache the selection active object
@@ -237,12 +238,43 @@ public class AddressableImporter : AssetPostprocessor
         AddressableImportSettings importSettings,
         out AddressableImportRule rule)
     {
+        if (importSettings.folderRules != null)
+		{
+            // Prioritise the narrower scoped folder rule
+            if (TryGetFolderRule(assetPath, importSettings, out rule))
+                return true;
+        }
+
         foreach (var r in importSettings.rules)
         {
             if (!r.Match(assetPath))
                 continue;
             rule = r;
             return true;
+        }
+
+        rule = null;
+        return false;
+    }
+
+    private static bool TryGetFolderRule(string assetPath, AddressableImportSettings importSettings, out AddressableImportRule rule)
+	{
+        foreach (var folder in importSettings.folderRules)
+        {
+            // Use a fast version of StartsWith to check if the asset is in the target folder
+            if (assetPath.StartsWithFast(folder.folderPath))
+            {
+                // Check rules for folder
+                int numRules = folder.rules.Count;
+                for (int i = 0; i < numRules; i++)
+                {
+                    var r = folder.rules[i];
+                    if (!r.Match(assetPath))
+                        continue;
+                    rule = r;
+                    return true;
+                }
+            }
         }
 
         rule = null;
@@ -287,7 +319,7 @@ public class AddressableImporter : AssetPostprocessor
         /// Reimporter folders.
         /// </summary>
         /// <param name="settings">Reference to the <see cref="AddressableAssetSettings"/></param>
-        public static void ReimportFolders(IEnumerable<String> assetPaths)
+        public static void ReimportFolders(IEnumerable<string> assetPaths)
         {
             HashSet<string> pathsToImport = new HashSet<string>();
             foreach (var assetPath in assetPaths)
@@ -359,6 +391,4 @@ public class AddressableImporter : AssetPostprocessor
             return false;
         }
     }
-
-
 }

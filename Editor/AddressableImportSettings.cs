@@ -4,6 +4,7 @@ using UnityEditor.AddressableAssets;
 using System.Collections.Generic;
 using System.Linq;
 using UnityAddressableImporter.Helper;
+using com.littlebigfun.addressable_importer.Editor;
 
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
@@ -25,6 +26,12 @@ public class AddressableImportSettings : ScriptableObject
     [Searchable(FilterOptions = SearchFilterOptions.ISearchFilterableInterface)]
 #endif
     public List<AddressableImportRule> rules = new List<AddressableImportRule>();
+
+    /// <summary>
+    /// Folder rules for limiting rules to specific diretories/folders.
+    /// For best import performance use these exclusively over standard rules list.
+    /// </summary>
+    public List<AddressableImportRuleFolder> folderRules = new List<AddressableImportRuleFolder>();
 
     [ButtonMethod]
     public void Save()
