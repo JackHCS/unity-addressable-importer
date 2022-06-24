@@ -174,7 +174,7 @@ public class AddressableImportRule
         {
             cachedPath = path;
             var regex = "^" + Regex.Escape(path).Replace(@"\*", ".*").Replace(@"\?", ".");
-            cachedRegex = new Regex(regex);
+            cachedRegex = new Regex(regex, RegexOptions.Compiled);
         }
 
         return cachedRegex;
@@ -185,7 +185,7 @@ public class AddressableImportRule
         if (cachedRegex == null || path != cachedPath)
         {
             cachedPath = path;
-            cachedRegex = new Regex(path);
+            cachedRegex = new Regex(path, RegexOptions.Compiled);
         }
 
         return cachedRegex;
