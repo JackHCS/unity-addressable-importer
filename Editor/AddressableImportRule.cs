@@ -113,6 +113,15 @@ public class AddressableImportRule
     private AddressableImportFilter _filter = new AddressableImportFilter();
     public AddressableImportFilter Filter => _filter ?? new AddressableImportFilter();
 
+    /// <summary>
+    /// Cached Regex instance.
+    /// </summary>
+    private Regex cachedRegex;
+    /// <summary>
+    /// Cached path to try to detect changes that require a new regex.
+    /// </summary>
+    private string cachedPath;
+
 
     public bool HasLabelRefs
     {
@@ -144,15 +153,42 @@ public class AddressableImportRule
         {
             if (path.Contains("*") || path.Contains("?"))
             {
-                var regex = "^" + Regex.Escape(path).Replace(@"\*", ".*").Replace(@"\?", ".");
-                return Regex.IsMatch(assetPath, regex);
+                Regex regex = GetWildcardRegex();
+                return regex.IsMatch(assetPath);
             }
             else
                 return assetPath.StartsWith(path);
         }
         else if (matchType == AddressableImportRuleMatchType.Regex)
-            return Regex.IsMatch(assetPath, path);
+		{
+            Regex regex = GetStandardRegex();
+            return regex.IsMatch(assetPath);
+        }
+
         return false;
+    }
+
+    private Regex GetWildcardRegex()
+	{
+        if (cachedRegex == null || path != cachedPath)
+        {
+            cachedPath = path;
+            var regex = "^" + Regex.Escape(path).Replace(@"\*", ".*").Replace(@"\?", ".");
+            cachedRegex = new Regex(regex);
+        }
+
+        return cachedRegex;
+    }
+
+    private Regex GetStandardRegex()
+	{
+        if (cachedRegex == null || path != cachedPath)
+        {
+            cachedPath = path;
+            cachedRegex = new Regex(path);
+        }
+
+        return cachedRegex;
     }
 
     /// <summary>
