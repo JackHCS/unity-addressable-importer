@@ -62,6 +62,8 @@ public class AddressableImporter : AssetPostprocessor
         if (importSettings.rules.SafeCount() == 0 && importSettings.folderRules.SafeCount() == 0)
             return;
 
+        PruneMissingGroups(settings);
+
         // Cache the selection active object
         var cachedSelectionActiveObject = selectionActiveObject;
         var dirty = false;
@@ -111,6 +113,33 @@ public class AddressableImporter : AssetPostprocessor
             // Restore the cached selection active object to avoid the current selection being set to null by
             // saving changed Addressable groups (#71).
             Selection.activeObject = cachedSelectionActiveObject;
+        }
+    }
+
+    /// <summary>
+    /// Method to run up front to remove any null entries from the AddressableAssetSettings.groups to prevent potential exceptions later.
+    /// Null entries only occasionally occur from incomplete commits of either the AssetGroups or AddressableAssetSettings files and unfortunately the AddressableAssetSettings does not account for groups potentially being null.
+    /// </summary>
+    /// <param name="settings"></param>
+    private static void PruneMissingGroups(AddressableAssetSettings settings)
+    {
+        bool isDirty = false;
+        List<AddressableAssetGroup> groups = settings.groups;
+        for (int i = groups.Count - 1; i >= 0; i--)
+        {
+            var entry = groups[i];
+            // Check if the entry is null
+            if (entry == null)
+            {
+                // Remove any null entries
+                groups.RemoveAt(i);
+            }
+        }
+
+        if (isDirty)
+        {
+            EditorUtility.SetDirty(settings);
+            AssetDatabase.SaveAssets();
         }
     }
 
