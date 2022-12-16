@@ -74,12 +74,27 @@ public class AddressableImporter : AssetPostprocessor
 #else
         string prefabAssetPath = prefabStage != null ? prefabStage.prefabAssetPath : null;
 #endif
-        foreach (var importedAsset in importedAssets)
+        try
         {
-            if (IsAssetIgnored(importedAsset))
-                continue;
-            if (prefabStage == null || prefabAssetPath != importedAsset) // Ignore current editing prefab asset.
-                dirty |= ApplyImportRule(importedAsset, null, settings, importSettings);
+            for (var i = 0; i < importedAssets.Length; i++)
+            {
+                var importedAsset = importedAssets[i];
+
+                if (IsAssetIgnored(importedAsset))
+                    continue;
+
+                if (EditorUtility.DisplayCancelableProgressBar(
+                    "Processing addressable import settings", $"[{i}/{importedAssets.Length}] {importedAsset}",
+                    (float)i / importedAssets.Length))
+                    break;
+
+                if (prefabStage == null || prefabAssetPath != importedAsset) // Ignore current editing prefab asset.
+                    dirty |= ApplyImportRule(importedAsset, null, settings, importSettings);
+            }
+        }
+        finally
+        {
+            EditorUtility.ClearProgressBar();
         }
 
         for (var i = 0; i < movedAssets.Length; i++)
@@ -224,7 +239,9 @@ public class AddressableImporter : AssetPostprocessor
         }
 
         var guid = AssetDatabase.AssetPathToGUID(assetPath);
-        var entry = settings.CreateOrMoveEntry(guid, group);
+        var entry = settings.FindAssetEntry(guid);
+        if (entry == null || entry.parentGroup != group)
+            entry = settings.CreateOrMoveEntry(guid, group);
 
         if (entry != null)
         {
@@ -382,6 +399,12 @@ public class AddressableImporter : AssetPostprocessor
             if (pathsToImport.Count > 0)
             {
                 Debug.Log($"AddressableImporter: Found {pathsToImport.Count} asset paths...");
+
+                if (!EditorUtility.DisplayDialog("Process files?",
+                                 $"About to process {pathsToImport.Count} files, is that OK?",
+                                 "Yes", "No"))
+                    return;
+
                 OnPostprocessAllAssets(pathsToImport.ToArray(), new string[0], new string[0], new string[0]);
             }
         }
